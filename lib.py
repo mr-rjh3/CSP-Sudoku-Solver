@@ -69,7 +69,7 @@ class CSP:
                 for j in range(int(number), len(col)): # Loop through all boxes after id in the row
                     id2 = letter + col[j] # id of second box to compare
                     if(number != col[j]): # if the boxes are not the same
-                        constraints.append((id,id2)) # add the constraint
+                        constraints.add((id,id2)) # add the constraint
         return constraints
 
     def _generateBinaryConstraintsCol(self, constraints): # Generates binary constraints for columns
@@ -89,15 +89,15 @@ class CSP:
         for number in col:
             for letter in row:
                 id = letter + number # id of firstbox
-                for j in range(row.index(letter), len(row)):
+                for j in range(row.index(letter), len(row)): # loop through all boxes after id in the column
                     id2 = row[j] + number # id of second box
-                    if(letter != row[j] and (id, id2) not in constraints): # if the boxes are not the same and the constraint is not already in the list
-                        constraints.append((id,id2)) # add the constraint
+                    if(letter != row[j]): # if the boxes are not the same
+                        constraints.add((id,id2)) # add the constraint
 
     def _generateBinaryConstraintsBox(self, constraints): # Generates binary constraints for grids
         """
         ----------------------------------------------------------
-        Description: Generates binary constraints for boxes 
+        Description: Generates binary constraints for the 3x3 boxes 
         Use: _generateBinaryConstraintsBox()
         ----------------------------------------------------------
         Parameters:
@@ -108,19 +108,19 @@ class CSP:
         """
         row = [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'I']]
         col = [['1','2','3'],['4','5','6'],['7','8','9']]
-        # Generate grids to get constraints of
+        # Generate boxes to get constraints of
         for i in range(len(row)):
-            grid = []
-            for letter in row[i]:
-                for number in col[i]:
-                    id = letter + number # id of box
-                    grid.append(id) # append to grid array
-                    
-            # Generate constraints for each grid by comparing each box to every other box in the grid
-            for j in range(len(grid)):
-                for k in range(j+1, len(grid)):
-                    if(grid[j] != grid[k] and (grid[j], grid[k]) not in constraints):
-                        constraints.append((grid[j], grid[k]))
+            for j in range(len(col)):
+                box = []
+                for letter in row[i]:
+                    for number in col[j]:
+                        id = letter + number # id of box
+                        box.append(id) # append to box array
+                # Generate constraints for each grid by comparing each slot to every other slot in the grid
+                for j in range(len(box)):
+                    for k in range(j+1, len(box)):
+                        if(box[j] != box[k]): # if the slot are not the same
+                            constraints.add((box[j], box[k]))
 
     def generateBinaryConstraints(self): # Generates all binary constraints
         """
@@ -132,7 +132,7 @@ class CSP:
             constraints - Array of binary constraints
         ----------------------------------------------------------
         """
-        constraints = []
+        constraints = set()
         self._generateBinaryConstraintsRow(constraints)
         self._generateBinaryConstraintsCol(constraints)
         self._generateBinaryConstraintsBox(constraints)
