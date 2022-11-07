@@ -168,7 +168,7 @@ class CSP:
             if xor == 0: # if not
                 self.slots[s1].domain = self.slots[s1].domain & ~d # delete d from self.slots[s1].domain
                 if (self.slots[s1].domain != 0) and ((self.slots[s1].domain & (self.slots[s1].domain - 1)) == 0):
-                    self.slots[s1].value = math.log(self.slots[s1].domain, 2) + 1
+                    self.slots[s1].value = int(math.log(self.slots[s1].domain, 2) + 1)
                 revised = True
                 print("reviseDomain: ", s1, s2, self.slots[s1].domain)
                 
