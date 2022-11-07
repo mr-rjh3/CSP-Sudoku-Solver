@@ -52,8 +52,34 @@ class CSP:
                 count += 1
         self.constraints = self.generateBinaryConstraints()
         
-        # self.NC()
+        self.nodeConsistency(debug)
         self.AC3()
+        
+    def nodeConsistency(self, debug = False):
+        """
+        ----------------------------------------------------------
+        Description: Ensures all nodes in the CSP passed, are node consistent
+        At this stage, all domains are initalized to [1, 2, 3, 4, 5, 6, 7, 8, 9].
+        Each domain will come out either the same, or minimized to match the slot's value
+        Use: csp.nodeConsistency()
+        ----------------------------------------------------------
+        Variables:
+            self - the CSP the function is called on
+        """
+        # For each key corresponding to a slot in CSP (which is a dictionary) 
+        for key in self.slots:
+            
+            # DEBUG: Print the key and it's corresponding slot object's value and domain (in binary)
+            slot = self.slots[key]
+            
+            if debug:
+                print(key, "->", slot.value, " Domain: ", slot.domain)
+            
+            # If the value is None, the domain of [1, 2, 3, 4, 5, 6, 7, 8, 9] is good,
+            # Otherwise, find the binary representation of the value for the domain and update 
+            if slot.value != None:
+                slot.domain = (1 << (slot.value - 1))  
+        return
     
     def _generateBinaryConstraintsRow(self, constraints): # Generates binary constraints for rows
         """
