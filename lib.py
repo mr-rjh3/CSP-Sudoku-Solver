@@ -12,8 +12,9 @@ class Slot:
         neighbours - Array of nodes that are neighbours of this node (Neighbours in the CSP not in the puzzle) (TODO: Might not use this)
         Value - value of the node
     """
-    def __init__(self, value):
+    def __init__(self, value, debug=False):
         self.domain = 0b111111111
+        if debug: self.binaryDomain = "{0:b}".format(self.domain)
         if(value == 0):
             self.value = None
         else:
@@ -40,13 +41,13 @@ class CSP:
     """
     MAX_VALUE = 9
     
-    def __init__(self, sudoku):
+    def __init__(self, sudoku, debug=False):
         
         self.slots = {}
         count = 0
         for i in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
             for j in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                slot = Slot(sudoku[count])
+                slot = Slot(sudoku[count], debug)
                 self.slots[i+j] = slot
                 count += 1
         self.constraints = self.generateBinaryConstraints()

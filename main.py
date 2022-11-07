@@ -2,17 +2,20 @@ from alive_progress import alive_bar
 import argparse, math
 from lib import CSP
 
-# parser = argparse.ArgumentParser(description='A* algorithm for n-puzzle')
-# parser.add_argument("-H", "--heuristic", help="The heuristic to use", choices=["manhattan", "displacement", "rowcol", "euclidean", "linear", "all"], default="manhattan")
-# parser.add_argument("-n", "--numberOfPuzzles", help="The number of puzzles that will randomly generate.", type=int, default=100)
-# parser.add_argument("-S", "--seed", help="The seed for the random number generator", type=int, default=None)
-# parser.add_argument("-i", "--interactive", help="Interactive mode", default=True)
-# parser.add_argument("-in", "--inputFile", help="Supplies the file for input", default=None)
-# parser.add_argument("-o", "--outputFile", help="Supplies the file name to output text to.", default="output.txt")
-# parser.add_argument("-csv", "--outputCSV", help="Supplies the file name to output to csv data to.", default="stats.csv")
-# parser.add_argument("-d", "--debug", help="Supplies the file name to output to csv data to.", action="store_true")
-# parser.add_argument("-p", "--puzzle", help="Supply a puzzle for the program to solve. e.g. '-p 1,5,2,4,3,7,6,8,0'", default=None, type=validPuzzle)
-# args = parser.parse_args()
+parser = argparse.ArgumentParser(description='CSP solver for sudoku')
+parser.add_argument("-H", "--heuristic", help="The heuristic to use", choices=["manhattan", "displacement", "rowcol", "euclidean", "linear", "all"], default="manhattan") #TODO change to real heuristics
+
+parser.add_argument("-n", "--numberOfPuzzles", help="The number of puzzles that will randomly generate.", type=int, default=1)
+parser.add_argument("-S", "--seed", help="The seed for the random number generator", type=int, default=None)
+
+parser.add_argument("-i", "--interactive", help="Interactive mode", default=True)
+
+parser.add_argument("-in", "--inputFile", help="Supplies the file for input", default=None)
+parser.add_argument("-o", "--outputFile", help="Supplies the file name to output text to.", default="output.txt")
+parser.add_argument("-csv", "--outputCSV", help="Supplies the file name to output to csv data to.", default="stats.csv")
+
+parser.add_argument("-d", "--debug", help="Tells the program to run in debug mode", action="store_true")
+args = parser.parse_args()
 
 # Visualization of the sudoku indexes
 # A1 A2 A3 | A4 A5 A6 | A7 A8 A9
@@ -27,6 +30,8 @@ from lib import CSP
 # H1 H2 H3 | H4 H5 H6 | H7 H8 H9
 # I1 I2 I3 | I4 I5 I6 | I7 I8 I9
 
+
+
 # sudoku represented by int array (0 = empty)
 sudoku = [0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 3, 0, 8, 5,
@@ -38,6 +43,6 @@ sudoku = [0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 4, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-csp = CSP(sudoku)
-print(len(csp.constraints))
-print("CSP generated")
+csp = CSP(sudoku, args.debug)
+
+print("CSP generated: ", len(csp.constraints), "constraints")
