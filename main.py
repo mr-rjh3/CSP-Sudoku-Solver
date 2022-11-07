@@ -39,5 +39,5 @@ sudoku = [0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 csp = CSP(sudoku)
-
+print(len(csp.constraints))
 print("CSP generated")
