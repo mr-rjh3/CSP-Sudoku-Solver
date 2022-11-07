@@ -42,6 +42,9 @@ class CSP:
     MAX_VALUE = 9
     
     def __init__(self, sudoku, debug=False):
+
+        print("INPUT SUDOKU")
+        self.printSudoku(sudoku)
         
         self.slots = {}
         count = 0
@@ -51,9 +54,13 @@ class CSP:
                 self.slots[i+j] = slot
                 count += 1
         self.constraints = self.generateBinaryConstraints()
-        
+
         self.nodeConsistency(debug)
         self.AC3()
+
+        # self.updateSudoku(sudoku)
+        # print("\n UPDATED SUDOKU")
+        # self.printSudoku(sudoku)
         
     def nodeConsistency(self, debug = False):
         """
@@ -80,6 +87,19 @@ class CSP:
             if slot.value != None:
                 slot.domain = (1 << (slot.value - 1))  
         return
+
+        
+    def updateSudoku(self, sudoku):
+        i = 0
+        for slot in self.slots:
+            if(sudoku[i] != 0 and self.slots[slot].value != None):
+                self.slots[slot].value = sudoku[i]
+            i += 1
+    
+    def printSudoku(self, sudoku):
+        for i in range(9):
+            print(sudoku[i*9:i*9+9])
+            
     
     def _generateBinaryConstraintsRow(self, constraints): # Generates binary constraints for rows
         """
