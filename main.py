@@ -15,6 +15,7 @@ parser.add_argument("-o", "--outputFile", help="Supplies the file name to output
 parser.add_argument("-csv", "--outputCSV", help="Supplies the file name to output to csv data to.", default="stats.csv")
 
 parser.add_argument("-d", "--debug", help="Tells the program to run in debug mode", action="store_true")
+parser.add_argument("-p", "--plot", help="Tells the program to run in plot mode", action="store_true")
 args = parser.parse_args()
 
 # Visualization of the sudoku indexes
@@ -31,7 +32,6 @@ args = parser.parse_args()
 # I1 I2 I3 | I4 I5 I6 | I7 I8 I9
 
 
-
 # sudoku represented by int array (0 = empty)
 sudoku = [0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 3, 0, 8, 5,
@@ -43,6 +43,26 @@ sudoku = [0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 4, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-csp = CSP(sudoku, args.debug)
+# sudoku =   [1, 2, 3, 4, 5, 6, 7, 8, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+# sudoku =   [1, 2, 3, 4, 0, 6, 7, 8, 0,
+#             4, 5, 6, 7, 8, 0, 1, 2, 3,
+#             7, 8, 0, 1, 2, 3, 4, 5, 6,
+#             2, 3, 4, 5, 6, 7, 8, 0, 1,
+#             5, 6, 0, 8, 0, 1, 2, 3, 4,
+#             8, 0, 1, 2, 3, 4, 5, 6, 7,
+#             3, 4, 5, 6, 7, 8, 0, 1, 2,
+#             6, 0, 8, 0, 1, 2, 3, 0, 5,
+#             0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+csp = CSP(sudoku, args.debug, args.plot)
 
 print("CSP generated: ", len(csp.constraints), "constraints")
