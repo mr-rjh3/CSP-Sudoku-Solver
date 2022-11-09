@@ -27,14 +27,12 @@ class Slot:
     ----------------------------------------------------------
     Variables:
         domain - Binary representation of domain (if this ever == 000000000, then the puzzle is impossible)
-        updatedValue - Boolean to check if the value has been updated
         Value - value of the node
         binaryDomain - String representation of the binary domain (for debugging)
     """
     def __init__(self, value, debug=False):
         self.domain = 0b111111111
         if debug: self.binaryDomain = "{0:09b}".format(self.domain)
-        self.updatedValue = False
         if(value == 0):
             self.value = None
         else:
@@ -53,7 +51,7 @@ class CSP:
         nodeConsistency(self) - Node Consistency algorithm
         arcConsistency3(self) - Arc Consistency algorithm
             _reviseDomain(self, slot1, slot2) - Helper function for AC3
-        updateSudoku(self, sudoku) - Updates the sudoku array with the values in the CSP
+        updatedSudoku(self, sudoku) - Updates the sudoku array with the values in the CSP
         printSudoku(self, sudoku) - Prints the sudoku array
         generateBinaryConstraints(self) - Generates binary constraints for this node.
             _generateBinaryConstraintsRow(self) - Helper function for generateBinaryConstraints that generates binary constraints for rows
@@ -67,6 +65,7 @@ class CSP:
         print("INPUT SUDOKU")
         self.debug = debug
         self.plot = plot
+        self.sudoku = sudoku
     
         self.slots = {}
         count = 0
@@ -77,16 +76,16 @@ class CSP:
                 count += 1
         self.constraints = self.generateBinaryConstraints()
 
-        self.printSudoku(sudoku)
+        self.printSudoku()
 
         self.nodeConsistency()
         if not self.arcConsistency3():
             colorHelper.error("ERROR: No solution")
             return
 
-        if(self.updateSudoku(sudoku)):
+        if(self.updatedSudoku()):
             print("\n UPDATED SUDOKU")
-            self.printSudoku(sudoku)
+            self.printSudoku()
             
     def nodeConsistency(self):
         """
@@ -178,7 +177,6 @@ class CSP:
                 if self.debug: self.slots[s1].binaryDomain = "{0:09b}".format(self.slots[s1].domain)
                 if (self.slots[s1].domain != 0) and ((self.slots[s1].domain & (self.slots[s1].domain - 1)) == 0):
                     self.slots[s1].value = int(math.log(self.slots[s1].domain, 2) + 1)
-                    self.slots[s1].updatedValue = True
                 revised = True
                 if self.debug: print("reviseDomain: ", s1, s2, self.slots[s1].domain)
                 
@@ -202,11 +200,11 @@ class CSP:
                 unsetSlots.append(key)
         return unsetSlots
         
-    def updateSudoku(self, sudoku):
+    def updatedSudoku(self):
         """
         ----------------------------------------------------------
         Description: Updates the sudoku array with the values in the CSP
-        Use: csp.updateSudoku(sudoku)
+        Use: csp.updatedSudoku(sudoku)
         ----------------------------------------------------------
         Variables:
             self - the CSP the function is called on
@@ -215,14 +213,12 @@ class CSP:
         updated = False
         i = 0
         for slot in self.slots:
-            if(sudoku[i] == 0 and self.slots[slot].updatedValue):
-                if self.debug: print("Updating", slot, "to", self.slots[slot].value)
-                sudoku[i] = self.slots[slot].value
+            if(self.sudoku[i] == 0 and self.slots[slot].value != None):
                 updated = True
             i += 1
         return updated
     
-    def printSudoku(self, sudoku):
+    def printSudoku(self):
         """
         ----------------------------------------------------------
         Description: Prints the sudoku in a nice format
@@ -237,10 +233,11 @@ class CSP:
         for slot in self.slots:
             if(i % 3 == 0):
                 print("|", end=" ")
-            if(self.slots[slot].updatedValue):
-                colorHelper.yellowPrint(str(sudoku[i]), end=" ")
+            if(self.sudoku[i] == 0 and self.slots[slot].value != None):
+                self.sudoku[i] = self.slots[slot].value
+                colorHelper.yellowPrint(str(self.sudoku[i]), end=" ")
             else:
-                print(sudoku[i], end=" ")
+                print(self.sudoku[i], end=" ")
             i += 1
             if(i % 9 == 0):
                 print("|")
@@ -425,9 +422,14 @@ class Search:
             suduku - solved sudoku puzzle
         ----------------------------------------------------------
         """
+        csp.plot = False
         solution = Search._backtrack(csp)
-        sudoku = [solution.slots[n].value for n in solution.slots]
-        solution.printSudoku(sudoku)
+        csp = solution
+        
+        if csp.updatedSudoku():
+            print('\nSOlVED SUDOKU')
+            csp.printSudoku()
+        
         return solution
     
     def _backtrack(csp, unset=None):
@@ -442,58 +444,33 @@ class Search:
             path - path to solution
         ----------------------------------------------------------
         """ 
-        csp = deepcopy(csp)
-        unsetlen = len(unset) if unset else 0
-        if unset is None:
+        _csp = deepcopy(csp) 
+        unsetlen = len(unset) if unset else 0 
+        if unset is None: 
             unset = csp.getUnsetSlots()
             
-        if len(unset) == 0:
+        if len(unset) == 0: 
             return csp
         
-        id = unset.pop(0)
+        id = unset.pop(0) 
         domain = csp.slots[id].domain
         
-        # loop over the domain
-        for bit in range(CSP.MAX_VALUE): # loop over all bits in the domain
+        for bit in range(CSP.MAX_VALUE): 
+            csp = deepcopy(_csp) 
             d = 1 << bit
-            if domain & d == 0: # skip if 0
+            if domain & d == 0: 
                 continue
             
             value = bit + 1
             csp.slots[id].value = value
-            csp.slots[id].domain = d
+            csp.slots[id].domain = d 
             
             constraints = csp.getConstraints(id)
             if not csp.arcConsistency3(constraints):
-                return False
+                return False 
             else:
-                result = Search._backtrack(csp, deepcopy(unset))
+                result = Search._backtrack(csp, deepcopy(unset)) 
                 if result is not False:
-                    return result
-            
+                    return result 
+        
         return False
-
-class Heuristic:
-    """
-    ----------------------------------------------------------
-    Description : Heuristics class, holds the algorithms for generating heuristics for the sudoku puzzle.
-    Use: use
-    ----------------------------------------------------------
-    Variables:
-        MINREMAININGVALUES - holds the minimum remaining values heuristic function
-        DEGREE - holds the degree heuristic function
-        LEASTCONSTRAININGVALUE - holds the least constraining value heuristic function
-        FORWARDCHECKING - holds the forward checking heuristic function
-        MAC - holds the MAC heuristic function
-    Methods:
-        minRemainingValues(csp) - minimum remaining values heuristic function
-        degree(csp) - degree heuristic function
-        leastConstrainingValue(csp) - least constraining value heuristic function
-        minConflicts(csp) - min conflicts heuristic function
-        forwardChecking(csp) - forward checking heuristic function
-        MAC(csp) - MAC heuristic function
-        heuristic_to_string(heuristic) - converts heuristic function to string
-        string_to_heuristic(heuristic) - converts string to heuristic function
-    ----------------------------------------------------------
-    """
-
