@@ -66,6 +66,7 @@ class CSP:
         self.debug = debug
         self.plot = plot
         self.sudoku = sudoku
+        self.isSolved = False
     
         self.slots = {}
         count = 0
@@ -80,13 +81,79 @@ class CSP:
 
         self.nodeConsistency()
         if not self.arcConsistency3():
-            colorHelper.error("ERROR: No solution")
-            return
+            raise Exception("No solution")
 
         if(self.updatedSudoku()):
             print("\n UPDATED SUDOKU")
             self.printSudoku()
-            
+        
+        self.isSolved = self.checkSolved()
+    
+    def checkSolved(self):
+        """
+        ----------------------------------------------------------
+        Description: Checks if the CSP is solved
+        Use: csp.checkSolved()
+        ----------------------------------------------------------
+        Variables:
+            self - the CSP the function is called on
+        ----------------------------------------------------------
+        Returns:
+            True if the CSP is solved, False otherwise
+        """
+        keys = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9',
+            'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9',
+            'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9',
+            'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9',
+            'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9',
+            'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9',
+            'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9',
+            'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9',
+            'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8', 'I9']
+        
+        # rows
+        for row in range(9):
+            values = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            for slot in keys[row*9:(row+1)*9]:
+                try:
+                    values.remove(self.slots[slot].value)
+                except ValueError:
+                    return False
+                
+            if len(values) != 0:
+                return False
+        
+        # cols
+        for col in range(9):
+            values = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            for slot in keys[col::9]:
+                try:
+                    values.remove(self.slots[slot].value)
+                except ValueError:
+                    return False
+                
+            if len(values) != 0:
+                return False
+        
+        # boxes
+        for rowBox in range(3):
+            for colBox in range(3):
+                values = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                for slot in (
+                    keys[rowBox*3 + colBox*27:rowBox*3+3 + colBox*27] + 
+                    keys[rowBox*3+9 + colBox*27:rowBox*3+12 + colBox*27] + 
+                    keys[rowBox*3+18 + colBox*27:rowBox*3+21 + colBox*27]
+                ):
+                    try:
+                        values.remove(self.slots[slot].value)
+                    except ValueError:
+                        return False
+                
+                if len(values) != 0:
+                    return False
+        
+        return True
+    
     def nodeConsistency(self):
         """
         ----------------------------------------------------------
@@ -144,7 +211,7 @@ class CSP:
                 if self.slots[c[0]].domain == 0:
                     return False
                 
-                for n in self._getNeighbors(c[0]):
+                for n in CSP._getNeighbors(c[0]):
                     queue.add((n, c[0]))
         if self.plot:
             plt.plot(queueIndex, queueLength)
@@ -247,7 +314,7 @@ class CSP:
         
         return
             
-    def _getNeighbors(self, slot):
+    def _getNeighbors(slot):
         """
         ----------------------------------------------------------
         Description: Returns a list of all neighbors of a slot
@@ -300,7 +367,7 @@ class CSP:
         ----------------------------------------------------------
         """
         constraints = set()
-        for n in self._getNeighbors(slot):
+        for n in CSP._getNeighbors(slot):
             constraints.add((n, slot))
         return constraints
 
@@ -427,7 +494,7 @@ class Search:
         csp = solution
         
         if csp.updatedSudoku():
-            print('\nSOlVED SUDOKU')
+            print('\nSOLVED SUDOKU')
             csp.printSudoku()
         
         return solution
@@ -445,14 +512,15 @@ class Search:
         ----------------------------------------------------------
         """ 
         _csp = deepcopy(csp) 
-        unsetlen = len(unset) if unset else 0 
+        
         if unset is None: 
             unset = csp.getUnsetSlots()
+            unset = Search.optimizeOrder(unset, _csp)
             
         if len(unset) == 0: 
             return csp
         
-        id = unset.pop(0) 
+        id = unset.pop(0)
         domain = csp.slots[id].domain
         
         for bit in range(CSP.MAX_VALUE): 
@@ -467,10 +535,62 @@ class Search:
             
             constraints = csp.getConstraints(id)
             if not csp.arcConsistency3(constraints):
-                return False 
+                continue
             else:
                 result = Search._backtrack(csp, deepcopy(unset)) 
                 if result is not False:
                     return result 
+        
+        return False
+    
+    def optimizeOrder(unset, csp):
+        """
+        ----------------------------------------------------------
+        Description: Helper function for backtracking search algorithm
+        Use: path = _backtrack(CSP)
+        ----------------------------------------------------------
+        Parameters:
+            csp - CSP object
+        Returns:
+            path - path to solution
+        ----------------------------------------------------------
+        """
+        neighborCount = {}
+        for id in unset:
+            neighborCount[id] = 0
+            for id2 in unset:
+                if id != id2 and Search._areNeighbors(id, id2):
+                    neighborCount[id] += 1
+                    
+        maxID = max(neighborCount, key=neighborCount.get)
+        # sort by lowest domain length
+        unset.sort(key=lambda x: bin(csp.slots[x].domain).count("1"))
+
+        unset.remove(maxID)
+        unset.insert(0,maxID)
+
+        return unset
+
+    def _areNeighbors(id1, id2):
+        """
+        ----------------------------------------------------------
+        Description: Helper function for backtracking search algorithm
+        Use: path = _backtrack(CSP)
+        ----------------------------------------------------------
+        Parameters:
+            csp - CSP object
+        Returns:
+            path - path to solution
+        ----------------------------------------------------------
+        """ 
+        
+        if id1[0] == id2[0]: 
+            return True
+        
+        if id1[1] == id2[1]: 
+            return True
+
+        if (ord(id1[0])-65) // 3 == (ord(id2[0])-65) // 3 and (int(id1[1])-1) // 3 == (int(id2[1])-1) // 3: 
+            return True
         
         return False
