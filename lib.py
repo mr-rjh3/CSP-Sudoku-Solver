@@ -48,11 +48,15 @@ class CSP:
         slots - Dictionary of slots in the CSP
         constraints - Array of constraints in the CSP
     Methods:
+        checkSolved(self) - Checks if the CSP is solved
         nodeConsistency(self) - Node Consistency algorithm
         arcConsistency3(self) - Arc Consistency algorithm
             _reviseDomain(self, slot1, slot2) - Helper function for AC3
+        getUnsetSlots(self) - Returns a list of unset slots
         updatedSudoku(self, sudoku) - Updates the sudoku array with the values in the CSP
         printSudoku(self, sudoku) - Prints the sudoku array
+        _getNeighbors(slot) - Returns a list of neighbors of a slot
+        getConstraints(slot) - Returns a list of constraints of a slot
         generateBinaryConstraints(self) - Generates binary constraints for this node.
             _generateBinaryConstraintsRow(self) - Helper function for generateBinaryConstraints that generates binary constraints for rows
             _generateBinaryConstraintsCol(self) - Helper function for generateBinaryConstraints that generates binary constraints for columns
@@ -546,13 +550,14 @@ class Search:
     def optimizeOrder(unset, csp):
         """
         ----------------------------------------------------------
-        Description: Helper function for backtracking search algorithm
-        Use: path = _backtrack(CSP)
+        Description: Optimizes the order of the unset slots
+        Use: unset = Search.optimizeOrder(unset, _csp)
         ----------------------------------------------------------
         Parameters:
+            unset - array of unset slots
             csp - CSP object
         Returns:
-            path - path to solution
+            unset (sorted) - array of unset slots optimally sorted
         ----------------------------------------------------------
         """
         neighborCount = {}
@@ -574,15 +579,16 @@ class Search:
     def _areNeighbors(id1, id2):
         """
         ----------------------------------------------------------
-        Description: Helper function for backtracking search algorithm
-        Use: path = _backtrack(CSP)
+        Description: Checks whether two slots are neighbors
+        Use: if Search._areNeighbors(id, id2):
         ----------------------------------------------------------
         Parameters:
-            csp - CSP object
+            id1 - id of first slot
+            id2 - id of second slot
         Returns:
-            path - path to solution
+            True or False - whether the slots are neighbors
         ----------------------------------------------------------
-        """ 
+        """
         
         if id1[0] == id2[0]: 
             return True
