@@ -1,6 +1,6 @@
 from alive_progress import alive_bar
 import argparse, math
-from lib import CSP
+from lib import CSP, Search
 
 parser = argparse.ArgumentParser(description='CSP solver for sudoku')
 parser.add_argument("-H", "--heuristic", help="The heuristic to use", choices=["manhattan", "displacement", "rowcol", "euclidean", "linear", "all"], default="manhattan") #TODO change to real heuristics
@@ -64,5 +64,5 @@ sudoku = [0, 0, 0, 0, 0, 0, 0, 0, 0,
 #             0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 csp = CSP(sudoku, args.debug, args.plot)
-
+Search.backtracking_search(csp)
 print("CSP generated: ", len(csp.constraints), "constraints")

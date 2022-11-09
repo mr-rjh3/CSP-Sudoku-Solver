@@ -113,7 +113,7 @@ class CSP:
                 if self.debug: print(key, "->", slot.value, " Domain: {0:09b}".format(slot.domain))
         return
 
-    def arcConsistency3(self):
+    def arcConsistency3(self, constraints=None):
         """
         ----------------------------------------------------------
         Description: Ensures all arcs in the CSP are consistent
@@ -126,7 +126,10 @@ class CSP:
             True if the CSP is arc consistent, False otherwise
         """
 
-        queue = deepcopy(self.constraints)
+        if constraints == None:
+            queue = deepcopy(self.constraints)
+        else:
+            queue = deepcopy(constraints)
 
         if self.plot:
             queueLength = []
@@ -180,6 +183,24 @@ class CSP:
                 if self.debug: print("reviseDomain: ", s1, s2, self.slots[s1].domain)
                 
         return revised
+        
+    def getUnsetSlots(self):
+        """
+        ----------------------------------------------------------
+        Description: Returns a list of all unset slots
+        Use: csp.getUnsetSlots()
+        ----------------------------------------------------------
+        Variables:
+            self - the CSP the function is called on
+        ----------------------------------------------------------
+        Returns:
+            A list of all unset slot's ids
+        """
+        unsetSlots = []
+        for key in self.slots:
+            if self.slots[key].value == None:
+                unsetSlots.append(key)
+        return unsetSlots
         
     def updateSudoku(self, sudoku):
         """
@@ -267,6 +288,24 @@ class CSP:
                         neighbors.append(s)
                     
         return neighbors
+    
+    def getConstraints(self, slot):
+        """
+        ----------------------------------------------------------
+        Description: Returns a list of all constraints of a slot
+        Use: csp.getConstraints(slot)
+        ----------------------------------------------------------
+        Variables:
+            self - the CSP the function is called on
+            slot - the slot to find constraints of
+        ----------------------------------------------------------
+        Returns: A list of all constraints of a slot
+        ----------------------------------------------------------
+        """
+        constraints = set()
+        for n in self._getNeighbors(slot):
+            constraints.add((n, slot))
+        return constraints
 
     def _generateBinaryConstraintsRow(self, constraints): # Generates binary constraints for rows
         """
@@ -373,6 +412,66 @@ class Search:
         _backtrack(assignment, self.CSP) - helper function for the backtracking search algorithm
     ----------------------------------------------------------
     """
+    
+    def backtracking_search(csp):
+        """
+        ----------------------------------------------------------
+        Description: Backtracking search algorithm
+        Use: path = backtracking_search(CSP)
+        ----------------------------------------------------------
+        Parameters:
+            csp - CSP object
+        Returns:
+            suduku - solved sudoku puzzle
+        ----------------------------------------------------------
+        """
+        solution = Search._backtrack(csp)
+        sudoku = [solution.slots[n].value for n in solution.slots]
+        solution.printSudoku(sudoku)
+        return solution
+    
+    def _backtrack(csp, unset=None):
+        """
+        ----------------------------------------------------------
+        Description: Helper function for backtracking search algorithm
+        Use: path = _backtrack(CSP)
+        ----------------------------------------------------------
+        Parameters:
+            csp - CSP object
+        Returns:
+            path - path to solution
+        ----------------------------------------------------------
+        """ 
+        csp = deepcopy(csp)
+        unsetlen = len(unset) if unset else 0
+        if unset is None:
+            unset = csp.getUnsetSlots()
+            
+        if len(unset) == 0:
+            return csp
+        
+        id = unset.pop(0)
+        domain = csp.slots[id].domain
+        
+        # loop over the domain
+        for bit in range(CSP.MAX_VALUE): # loop over all bits in the domain
+            d = 1 << bit
+            if domain & d == 0: # skip if 0
+                continue
+            
+            value = bit + 1
+            csp.slots[id].value = value
+            csp.slots[id].domain = d
+            
+            constraints = csp.getConstraints(id)
+            if not csp.arcConsistency3(constraints):
+                return False
+            else:
+                result = Search._backtrack(csp, deepcopy(unset))
+                if result is not False:
+                    return result
+            
+        return False
 
 class Heuristic:
     """
