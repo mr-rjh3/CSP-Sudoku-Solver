@@ -1,18 +1,13 @@
 from alive_progress import alive_bar
-import argparse, math
+import argparse, math, time
 from lib import CSP, Search, colorHelper
 
 parser = argparse.ArgumentParser(description='CSP solver for sudoku')
-parser.add_argument("-H", "--heuristic", help="The heuristic to use", choices=["manhattan", "displacement", "rowcol", "euclidean", "linear", "all"], default="manhattan") #TODO change to real heuristics
-
-parser.add_argument("-n", "--numberOfPuzzles", help="The number of puzzles that will randomly generate.", type=int, default=1)
-parser.add_argument("-S", "--seed", help="The seed for the random number generator", type=int, default=None)
-
 parser.add_argument("-i", "--interactive", help="Interactive mode", default=True)
 
 parser.add_argument("-in", "--inputFile", help="Supplies the file for input", default=None)
 parser.add_argument("-o", "--outputFile", help="Supplies the file name to output text to.", default="output.txt")
-parser.add_argument("-csv", "--outputCSV", help="Supplies the file name to output to csv data to.", default="stats.csv")
+parser.add_argument("-csv", "--csvFile", help="Supplies the file name to output csv to.", default="output.csv")
 
 parser.add_argument("-d", "--debug", help="Tells the program to run in debug mode", action="store_true")
 parser.add_argument("-p", "--plot", help="Tells the program to run in plot mode", action="store_true")
@@ -31,6 +26,17 @@ args = parser.parse_args()
 # H1 H2 H3 | H4 H5 H6 | H7 H8 H9
 # I1 I2 I3 | I4 I5 I6 | I7 I8 I9
 
+# Easy
+# sudoku =   [9, 0, 0, 5, 0, 8, 0, 0, 7,
+#             0, 8, 0, 3, 0, 2, 9, 0, 5,
+#             0, 5, 4, 0, 0, 0, 0, 8, 0,
+#             0, 7, 0, 6, 8, 0, 0, 3, 2,
+#             1, 0, 0, 0, 0, 4, 0, 0, 8,
+#             5, 0, 0, 2, 1, 9, 0, 6, 0,
+#             0, 0, 0, 9, 0, 6, 0, 0, 0,
+#             7, 2, 6, 0, 0, 1, 0, 0, 0,
+#             0, 0, 0, 0, 0, 0, 0, 0, 0]
+
 sudoku =   [1, 0, 0, 0, 0, 7, 0, 9, 0, 
             0, 3, 0, 0, 2, 0, 0, 0, 8, 
             0, 0, 9, 6, 0, 0, 5, 0, 0, 
@@ -42,13 +48,17 @@ sudoku =   [1, 0, 0, 0, 0, 7, 0, 9, 0,
             0, 0, 7, 0, 0, 0, 3, 0, 0]
 
 try:
+    start = time.time()
     csp = CSP(sudoku, args.debug, args.plot)
-    print("CSP generated: ", len(csp.constraints), "constraints")
+    if(args.debug):print("CSP generated: ", len(csp.constraints), "constraints")
     if csp.isSolved:
         print("CSP is already solved by pre-processing!")
-        exit()
     else:
         Search.backtracking_search(csp)
+    end = time.time()
+    print("Time Taken: {:.4f}s".format(end - start))
+    
+    print(csp.stats)
 except (Exception) as e:
     colorHelper.error("ERROR: No solution")
     print(e)

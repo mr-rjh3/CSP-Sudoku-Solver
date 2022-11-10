@@ -1,7 +1,6 @@
 from copy import deepcopy
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import math
-
 class colorHelper:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -19,6 +18,7 @@ class colorHelper:
     def yellowPrint(text, end='\n'):
         print(colorHelper.WARNING + text + colorHelper.ENDC, end=end)
 
+timesRevised = 0
 class Slot:
     """
     ----------------------------------------------------------
@@ -71,6 +71,14 @@ class CSP:
         self.plot = plot
         self.sudoku = sudoku
         self.isSolved = False
+        
+        self.stats = {
+            "nodeConsistency": 0,
+            "arcConsistency": 0,
+            "backtrack": 0,
+            "backtrackFailures": 0,
+            "backtrackSuccess": 0
+        }
     
         self.slots = {}
         count = 0
@@ -178,6 +186,7 @@ class CSP:
             # If the value is None, the domain of [1, 2, 3, 4, 5, 6, 7, 8, 9] is good,
             # Otherwise, find the binary representation of the value for the domain and update 
             if slot.value != None:
+                self.stats["nodeConsistency"] += 1
                 slot.domain = (1 << (slot.value - 1))  
                 if self.debug: slot.binaryDomain = "{0:09b}".format(slot.domain)
                 if self.debug: print(key, "->", slot.value, " Domain: {0:09b}".format(slot.domain))
@@ -212,6 +221,7 @@ class CSP:
                 queueIndex.append(count)
                 count += 1
             if self._reviseDomain(c):
+                self.stats["arcConsistency"] += 1
                 if self.slots[c[0]].domain == 0:
                     return False
                 
@@ -249,7 +259,7 @@ class CSP:
                 if (self.slots[s1].domain != 0) and ((self.slots[s1].domain & (self.slots[s1].domain - 1)) == 0):
                     self.slots[s1].value = int(math.log(self.slots[s1].domain, 2) + 1)
                 revised = True
-                if self.debug: print("reviseDomain: ", s1, s2, self.slots[s1].domain)
+                if self.debug and self.slots[s1].domain == 0: print("reviseDomain: ", s1, s2, self.slots[s1].domain)
                 
         return revised
         
@@ -539,9 +549,12 @@ class Search:
             
             constraints = csp.getConstraints(id)
             if not csp.arcConsistency3(constraints):
+                csp.stats['backtrackFailures'] += 1
                 continue
             else:
+                csp.stats['backtrackSuccess'] += 1
                 result = Search._backtrack(csp, deepcopy(unset)) 
+                
                 if result is not False:
                     return result 
         
