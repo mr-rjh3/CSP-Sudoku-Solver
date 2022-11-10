@@ -2,12 +2,13 @@ from alive_progress import alive_bar
 import argparse, math, time
 from lib import CSP, Search, colorHelper
 
-parser = argparse.ArgumentParser(description='CSP solver for sudoku')
-parser.add_argument("-i", "--interactive", help="Interactive mode", default=True)
+SUDOKU_WIDTH = 9
 
-parser.add_argument("-in", "--inputFile", help="Supplies the file for input", default=None)
+parser = argparse.ArgumentParser(description='CSP solver for sudoku')
+
+parser.add_argument("-in", "--inputFile", help="Supplies the file(s) for input", default=None, action="extend", nargs="+", required=True)
 parser.add_argument("-o", "--outputFile", help="Supplies the file name to output text to.", default="output.txt")
-parser.add_argument("-csv", "--csvFile", help="Supplies the file name to output csv to.", default="output.csv")
+# parser.add_argument("-csv", "--csvFile", help="Supplies the file name to output csv to.", default="output.csv")
 
 parser.add_argument("-d", "--debug", help="Tells the program to run in debug mode", action="store_true")
 parser.add_argument("-p", "--plot", help="Tells the program to run in plot mode", action="store_true")
@@ -26,39 +27,88 @@ args = parser.parse_args()
 # H1 H2 H3 | H4 H5 H6 | H7 H8 H9
 # I1 I2 I3 | I4 I5 I6 | I7 I8 I9
 
-# Easy
-# sudoku =   [9, 0, 0, 5, 0, 8, 0, 0, 7,
-#             0, 8, 0, 3, 0, 2, 9, 0, 5,
-#             0, 5, 4, 0, 0, 0, 0, 8, 0,
-#             0, 7, 0, 6, 8, 0, 0, 3, 2,
-#             1, 0, 0, 0, 0, 4, 0, 0, 8,
-#             5, 0, 0, 2, 1, 9, 0, 6, 0,
-#             0, 0, 0, 9, 0, 6, 0, 0, 0,
-#             7, 2, 6, 0, 0, 1, 0, 0, 0,
-#             0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-sudoku =   [1, 0, 0, 0, 0, 7, 0, 9, 0, 
-            0, 3, 0, 0, 2, 0, 0, 0, 8, 
-            0, 0, 9, 6, 0, 0, 5, 0, 0, 
-            0, 0, 5, 3, 0, 0, 9, 0, 0, 
-            0, 1, 0, 0, 8, 0, 0, 0, 2, 
-            6, 0, 0, 0, 0, 4, 0, 0, 0, 
-            3, 0, 0, 0, 0, 0, 0, 1, 0, 
-            0, 4, 0, 0, 0, 0, 0, 0, 7, 
-            0, 0, 7, 0, 0, 0, 3, 0, 0]
-
-try:
-    start = time.time()
-    csp = CSP(sudoku, args.debug, args.plot)
-    if(args.debug):print("CSP generated: ", len(csp.constraints), "constraints")
-    if csp.isSolved:
-        print("CSP is already solved by pre-processing!")
+# check if user supplied an input file
+if args.inputFile != None:
+    sudokus = {}
+    if isinstance(args.inputFile, str):
+        files = [args.inputFile]
     else:
-        Search.backtracking_search(csp)
-    end = time.time()
-    print("Time Taken: {:.4f}s".format(end - start))
-    
-    print(csp.stats)
-except (Exception) as e:
-    colorHelper.error("ERROR: No solution")
-    print(e)
+        files = args.inputFile
+        
+    for file in files:
+        sudoku = []
+        with open(file, 'r') as f:
+            for line in f:
+                line = line.strip('\n')
+                if len(line) > SUDOKU_WIDTH:
+                    line = line[0:SUDOKU_WIDTH]
+                    colorHelper.warning(str(file)+":")
+                    colorHelper.warning("\tLine too long, truncating to " + str(SUDOKU_WIDTH) + " characters")
+                elif len(line) < SUDOKU_WIDTH:
+                    colorHelper.warning(str(file)+":")
+                    colorHelper.warning("\tLine too short, padding with 0's")
+                    line = line.ljust(SUDOKU_WIDTH, '0')
+                    
+                for c in line:
+                    if c.isdigit():
+                        sudoku.append(int(c))
+                    else:
+                        sudoku.append(0)
+                
+                if len(sudoku) > SUDOKU_WIDTH * SUDOKU_WIDTH:
+                    colorHelper.warning("Too many characters in file, ignoring the rest")
+                    sudoku = sudoku[0:SUDOKU_WIDTH * SUDOKU_WIDTH]
+                    break
+            
+            if len(sudoku) < SUDOKU_WIDTH * SUDOKU_WIDTH:
+                colorHelper.warning(str(file)+":")
+                colorHelper.warning("\tToo few characters in file, padding with 0's")
+                while len(sudoku) < SUDOKU_WIDTH * SUDOKU_WIDTH:
+                    sudoku.append(0)
+        sudokus[str(file)] = sudoku
+
+# solve input sudoku(s)
+# for name in sudokus:
+#     sudoku = sudokus[name]
+#     try:
+#         colorHelper.info("Solving " + str(name) + "...")
+#         start = time.time()
+#         csp = CSP(sudoku, args.outputFile, args.debug, args.plot)
+#         if(args.debug):print("CSP generated: ", len(csp.constraints), "constraints")
+#         if csp.isSolved:
+#             print("CSP is already solved by pre-processing!")
+#         else:
+#             Search.backtracking_search(csp)
+#         end = time.time()
+#         print("Time Taken: {:.4f}s".format(end - start))
+        
+#         print(csp.stats)
+#     except (Exception) as e:
+#         colorHelper.error("ERROR: No solution")
+#         print(e)
+
+# clear output file
+file = open(args.outputFile, "w")
+file.close()
+
+for name in sudokus:
+    sudoku = sudokus[name]
+    try:
+        file = open(args.outputFile, "a")
+        colorHelper.info("Solving " + str(name) + "...")
+        file.write("Solving " + str(name) + "...\n")
+        start = time.time()
+        csp = CSP(sudoku, file, args.debug, args.plot)
+        if(args.debug):print("CSP generated: ", len(csp.constraints), "constraints")
+        if csp.isSolved:
+            print("CSP is already solved by pre-processing!")
+            file.write("CSP is already solved by pre-processing!\n")
+        else:
+            Search.backtracking_search(csp, file)
+        end = time.time()
+        print("Time Taken: {:.4f}s".format(end - start))
+        file.write("Time Taken: {:.4f}s\n\n".format(end - start))
+        file.close()
+    except (Exception) as e:
+        colorHelper.error("ERROR: No solution")
+        print(e)

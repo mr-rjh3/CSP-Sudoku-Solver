@@ -1,5 +1,5 @@
 from copy import deepcopy
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import math
 class colorHelper:
     HEADER = '\033[95m'
@@ -14,6 +14,12 @@ class colorHelper:
 
     def error(text):
         print(colorHelper.FAIL + text + colorHelper.ENDC)
+
+    def warning(text):
+        print(colorHelper.WARNING + text + colorHelper.ENDC)
+    
+    def info(text):
+        print(colorHelper.OKBLUE + text + colorHelper.ENDC)
 
     def yellowPrint(text, end='\n'):
         print(colorHelper.WARNING + text + colorHelper.ENDC, end=end)
@@ -64,13 +70,15 @@ class CSP:
     """
     MAX_VALUE = 9
     
-    def __init__(self, sudoku, debug=False, plot=False):
+    def __init__(self, sudoku, file, debug=False, plot=False):
 
-        print("INPUT SUDOKU")
         self.debug = debug
         self.plot = plot
         self.sudoku = sudoku
         self.isSolved = False
+        
+        print("INPUT SUDOKU")
+        file.write("INPUT SUDOKU\n")
         
         self.stats = {
             "nodeConsistency": 0,
@@ -89,7 +97,7 @@ class CSP:
                 count += 1
         self.constraints = self.generateBinaryConstraints()
 
-        self.printSudoku()
+        self.printSudoku(file)
 
         self.nodeConsistency()
         if not self.arcConsistency3():
@@ -97,7 +105,8 @@ class CSP:
 
         if(self.updatedSudoku()):
             print("\n UPDATED SUDOKU")
-            self.printSudoku()
+            file.write("\n UPDATED SUDOKU\n")
+            self.printSudoku(file)
         
         self.isSolved = self.checkSolved()
     
@@ -299,7 +308,7 @@ class CSP:
             i += 1
         return updated
     
-    def printSudoku(self):
+    def printSudoku(self, file):
         """
         ----------------------------------------------------------
         Description: Prints the sudoku in a nice format
@@ -310,21 +319,28 @@ class CSP:
             sudoku - the sudoku to be printed
         """
         print("+-----------------------+")
+        file.write("+-----------------------+\n")
         i = 0
         for slot in self.slots:
             if(i % 3 == 0):
                 print("|", end=" ")
+                file.write("| ")
             if(self.sudoku[i] == 0 and self.slots[slot].value != None):
                 self.sudoku[i] = self.slots[slot].value
                 colorHelper.yellowPrint(str(self.sudoku[i]), end=" ")
+                file.write(str(self.sudoku[i]) + " ")
             else:
                 print(self.sudoku[i], end=" ")
+                file.write(str(self.sudoku[i])+" ")
             i += 1
             if(i % 9 == 0):
                 print("|")
+                file.write("|\n")
                 if(i % 27 == 0 and i != 81):
                     print("|-------+-------+-------|")
+                    file.write("|-------+-------+-------|\n")
         print("+-----------------------+")
+        file.write("+-----------------------+\n")
         
         return
             
@@ -491,7 +507,7 @@ class Search:
     ----------------------------------------------------------
     """
     
-    def backtracking_search(csp):
+    def backtracking_search(csp, file):
         """
         ----------------------------------------------------------
         Description: Backtracking search algorithm
@@ -509,7 +525,8 @@ class Search:
         
         if csp.updatedSudoku():
             print('\nSOLVED SUDOKU')
-            csp.printSudoku()
+            file.write('\nSOLVED SUDOKU\n')
+            csp.printSudoku(file)
         
         return solution
     
