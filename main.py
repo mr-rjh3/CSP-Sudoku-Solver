@@ -67,26 +67,6 @@ if args.inputFile != None:
                     sudoku.append(0)
         sudokus[str(file)] = sudoku
 
-# solve input sudoku(s)
-# for name in sudokus:
-#     sudoku = sudokus[name]
-#     try:
-#         colorHelper.info("Solving " + str(name) + "...")
-#         start = time.time()
-#         csp = CSP(sudoku, args.outputFile, args.debug, args.plot)
-#         if(args.debug):print("CSP generated: ", len(csp.constraints), "constraints")
-#         if csp.isSolved:
-#             print("CSP is already solved by pre-processing!")
-#         else:
-#             Search.backtracking_search(csp)
-#         end = time.time()
-#         print("Time Taken: {:.4f}s".format(end - start))
-        
-#         print(csp.stats)
-#     except (Exception) as e:
-#         colorHelper.error("ERROR: No solution")
-#         print(e)
-
 # clear output file
 file = open(args.outputFile, "w")
 file.close()
