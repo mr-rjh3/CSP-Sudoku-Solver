@@ -1,5 +1,4 @@
-from alive_progress import alive_bar
-import argparse, math, time
+import argparse, time
 from lib import CSP, Search, colorHelper
 
 SUDOKU_WIDTH = 9
